@@ -42,4 +42,17 @@
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Polish_Notation_Translater(WinAPI).rc">
+      <Filter>Файлы ресурсов</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="zSymbol.ico">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="zUpdated SGRecBinFull.ico">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+  </ItemGroup>
 </Project>

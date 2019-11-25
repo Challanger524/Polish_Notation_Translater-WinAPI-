@@ -1,6 +1,6 @@
 #include "Precompiled.h"
 #include "API.h"
-//#include "Translator.h"
+#include "resource.h"
 
 HBRUSH hbrBkgnd = NULL;
 
@@ -44,7 +44,6 @@ void PrintOut(const char *input, const unique_ptr<char[]> &res1, const unique_pt
 	SetWindowText(hEdit2, res1.get());
 	SetWindowText(hEdit3, res2.get());
 }
-
 void PrintError(const char *Message) { MessageBox(0, Message, "Error", MB_OK | MB_ICONWARNING | MB_DEFBUTTON2); }
 void Craete_Console() 
 {
@@ -69,8 +68,8 @@ Main::Main(LPCSTR caption, int Pos_X, int Pos_Y, int Siz_X, int Siz_Y, HINSTANCE
 		wc.lpfnWndProc = (WNDPROC) MainProc;
 		wc.style = CS_HREDRAW | CS_VREDRAW;
 		wc.hInstance = hInstance;//from point of enterance
-		//wc.hIcon = LoadIconA(hInstance, MAKEINTRESOURCEA(ICON_EXE));
-		if (wc.hIcon == NULL) wc.hIcon = LoadIconA(NULL, IDI_APPLICATION);
+	   wc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(ICON_EXE));
+		if (wc.hIcon == NULL) wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
 		wc.hCursor = LoadCursorA(NULL, IDC_CROSS);
 		wc.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
 		wc.lpszMenuName = NULL;
@@ -94,7 +93,39 @@ Main::Main(LPCSTR caption, int Pos_X, int Pos_Y, int Siz_X, int Siz_Y, HINSTANCE
 		terminate();
 	}
 }
+Manual::Manual(LPCSTR caption, int Pos_X, int Pos_Y, int Siz_X, int Siz_Y)
+{
+	const char ClassName[] = "DialogClass";
+	WNDCLASS wc = {0};
+	if (!handle)
+	{
+		memset(&wc, 0, sizeof(wc));
+		wc.lpfnWndProc = (WNDPROC) DialogProc;
+		wc.hInstance = (HINSTANCE) GetModuleHandle(NULL);
+		wc.hbrBackground = GetSysColorBrush(COLOR_3DFACE);
+		wc.hIcon = LoadIcon (GetModuleHandle (NULL), MAKEINTRESOURCE (ICON_TAB));
+		if (wc.hIcon == NULL) wc.hIcon = LoadIconA(NULL, IDI_APPLICATION);
+		wc.lpszClassName = ClassName;
 
+		if (RegisterClass(&wc)) {
+			cout << "DialogClass registerd\n";
+			handle = CreateWindow(ClassName, caption, WS_CAPTION | WS_CLIPCHILDREN, Pos_X, Pos_Y, Siz_X, Siz_Y, NULL, NULL, (HINSTANCE) GetModuleHandle(NULL), NULL);
+		}
+		else {
+			cout << "FAIL: to register DialogClass\n";
+			terminate();
+		}
+		if (handle) cout << "Dialog Box created\n";
+		else {
+			cout << "FAIL: to create Dialog Box\n";
+			terminate();
+		}
+	}
+	else {
+		PrintError("Only one instance of the window is allowed!");
+		terminate();
+	}
+}
 LRESULT CALLBACK Main::MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	static RECT rect;

@@ -1,6 +1,5 @@
 #pragma once
 #include "Precompiled.h"
-//#include "resource.h"
 
 enum BT {
 	BT_PASTE = 3000,
@@ -13,20 +12,20 @@ enum BT {
 extern HWND hWndMain;
 extern HWND hDialog;
 
-extern bool(*Terminal)(const char *, unique_ptr<char[]> &, unique_ptr<char[]> &);
+extern bool(*Terminal)(const char *, unique_ptr<char[]> &, unique_ptr<char[]> &);//For inside WinMain usage.
+extern int OperChecker(const char Operator);//For inside API.cpp usage
 
-extern int OperChecker(const char Operator);
-void PrintOut(const char *Buffer, const unique_ptr<char[]> &res1, const unique_ptr<char[]> &res2);
-
+void PrintOut(const char *input, const unique_ptr<char[]> &res1, const unique_ptr<char[]> &res2);
+void PrintError(const char *message);
 void Craete_Console();
-void PrintError(const char *Message);
 
 class Main {
 	HWND handle = nullptr;
-	static LRESULT CALLBACK MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);// Заголовок оконной функции
+	static LRESULT CALLBACK MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);//Main window procedure function declaration
 public:
 	explicit operator HWND () const { return handle; }
 	explicit Main(LPCSTR caption, int Pos_X, int Pos_Y, int Siz_X, int Siz_Y, HINSTANCE hInstance);
+
 	Main(const Main&) = delete;
 	Main operator =(const Main&) = delete;
 private:
@@ -38,39 +37,8 @@ class Manual {
 	static LRESULT CALLBACK DialogProc(HWND, UINT, WPARAM, LPARAM);
 public:
 	explicit operator HWND () const { return handle; }
-	explicit Manual(LPCSTR caption, int Pos_X, int Pos_Y, int Siz_X, int Siz_Y)
-	{
-		const char ClassName[] = "DialogClass";
-		WNDCLASS wc = {0};
-		if (!handle)
-		{
-			memset(&wc, 0, sizeof(wc));
-			wc.lpfnWndProc = (WNDPROC) DialogProc;
-			wc.hInstance = (HINSTANCE) GetModuleHandle(NULL);
-			wc.hbrBackground = GetSysColorBrush(COLOR_3DFACE);
-			//wc.hIcon = LoadIconA (GetModuleHandleA (NULL), MAKEINTRESOURCEA (ICON_TAB));
-			if (wc.hIcon == NULL) wc.hIcon = LoadIconA(NULL, IDI_APPLICATION);
-			wc.lpszClassName = ClassName;
+	explicit Manual(LPCSTR caption, int Pos_X, int Pos_Y, int Siz_X, int Siz_Y);
 
-			if (RegisterClass(&wc)) {
-				cout << "DialogClass registerd\n";
-				handle = CreateWindow(ClassName, caption, WS_CAPTION | WS_CLIPCHILDREN, Pos_X, Pos_Y, Siz_X, Siz_Y, NULL, NULL, (HINSTANCE) GetModuleHandle(NULL), NULL);
-			}
-			else {
-				cout << "FAIL: to register DialogClass\n";
-				terminate();
-			}
-			if (handle) cout << "Dialog Box created\n";
-			else {
-				cout << "FAIL: to create Dialog Box\n";
-				terminate();
-			}
-		}
-		else {
-			PrintError("Only one instance of the window is allowed!");
-			terminate();
-		}
-	}
 	Manual(const Manual&) = delete;
 	Manual operator =(const Manual&) = delete;
 private:
