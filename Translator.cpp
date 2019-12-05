@@ -502,7 +502,10 @@ void PostToInf(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_s
 				while (ptr[k] != '\0') mas[low][j++] = ptr[k++];
 				mas[low][j++] = ')';
 			}
-			else while (ptr[j] != '\0') mas[low][j] = ptr[j++]; //without brackets '(')'
+			else while (ptr[j] != '\0') {
+				mas[low][j] = ptr[j]; //without brackets '(')'
+				j++;
+			}
 
 			mas[low][0] = static_cast<char>(priority + 48);
 			mas[low][j++] = _string[pos];

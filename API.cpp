@@ -11,13 +11,21 @@ hEdit3,
 hEdit11,// Additional left/below no active edits with info.
 hEdit21,
 hEdit31;
+HWND hCombo;
 
 HWND hDialog, hTab;
 array<HWND, 2> Tab;
 
+array<char[24], 6 > examples = {
+	"(a+b!!)*12!", "((a!+b)!*15)^2!",  //infix
+	"!*!+!a!1 23", "!^!/*!+a!b1!23!4", //prefix
+	"a!1 23-+", "ab+c*3 1 2-/^",  //postfix
+};
+
 bool(*Terminal)(const char *, unique_ptr<char[]> &, unique_ptr<char[]> &) = nullptr;
 
-void PrintOut(const char *input, const unique_ptr<char[]> &res1, const unique_ptr<char[]> &res2) {
+void PrintError(const char *Message) { MessageBox(0, Message, "Error", MB_OK | MB_ICONWARNING | MB_DEFBUTTON2); }
+void ShowResult(const char *input, const unique_ptr<char[]> &res1, const unique_ptr<char[]> &res2) {
 
 	if (OperChecker(input[0])) {//if Prefix
 
@@ -44,7 +52,6 @@ void PrintOut(const char *input, const unique_ptr<char[]> &res1, const unique_pt
 	SetWindowText(hEdit2, res1.get());
 	SetWindowText(hEdit3, res2.get());
 }
-void PrintError(const char *Message) { MessageBox(0, Message, "Error", MB_OK | MB_ICONWARNING | MB_DEFBUTTON2); }
 void Craete_Console() 
 {
 	FILE *stream;
@@ -56,6 +63,25 @@ void Craete_Console()
 	//freopen_s(&stream, "CONOUT$", "w", stderr);
 	freopen_s(&stream, "CONOUT$", "w", stdout);
 	cout << "Console creaed\n";
+}
+void Edit_Paste(HWND hEdit) {
+		if (IsClipboardFormatAvailable(CF_TEXT) == 0) return;
+		if (OpenClipboard(hWndMain) == 0) return;
+		HGLOBAL hglb = GetClipboardData(CF_TEXT);
+		SetWindowText(hEdit, (char*) GlobalLock(hglb));
+		GlobalUnlock(hglb);
+		CloseClipboard();
+		SetFocus(hEdit);
+		SendMessage(hEdit, EM_SETSEL, 0, -1);//0, -1 means all text sellection.
+}
+void Edit_Copy(HWND hEdit) {
+		if (OpenClipboard(hWndMain) == 0) return;
+		EmptyClipboard();
+		HGLOBAL hglb = GlobalAlloc(GMEM_FIXED, GetWindowTextLength(hEdit) + 1);
+		GetWindowText(hEdit, (char*) GlobalLock(hglb), GetWindowTextLength(hEdit) + 1);//Putting retrieved text into Clipboard memory obtained by locking it.(with one line of code)
+		GlobalUnlock(hglb);
+		SetClipboardData(CF_TEXT, hglb);
+		CloseClipboard();
 }
 
 Main::Main(LPCSTR caption, int Pos_X, int Pos_Y, int Siz_X, int Siz_Y, HINSTANCE hInstance)
@@ -126,6 +152,7 @@ Manual::Manual(LPCSTR caption, int Pos_X, int Pos_Y, int Siz_X, int Siz_Y)
 		terminate();
 	}
 }
+
 LRESULT CALLBACK Main::MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	static RECT rect;
@@ -151,17 +178,30 @@ LRESULT CALLBACK Main::MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		HWND hButtTrans = CreateWindow("Button", "Translate", WS_BORDER | WS_CHILD | WS_VISIBLE | BS_VCENTER | BS_CENTER, (rect.right - rect.left) / 2 - 60, ((rect.bottom - rect.top) / 6 + (rect.bottom - rect.top) / 2) / 2, 100, 50, hWnd, (HMENU) BT_TRANSL, NULL, NULL);
 		HWND hButtManual = CreateWindow("Button", "Manual", WS_CHILD | WS_VISIBLE | BS_VCENTER | BS_CENTER, 0, 0, 60, 25, hWnd, (HMENU) BT_MANUAL, NULL, NULL);
 
+		hCombo = CreateWindow(WC_COMBOBOX, TEXT("Examples"), CBS_DROPDOWN | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE, 0, (rect.bottom - rect.top) / 6 - 1, 100, rect.bottom, hWnd, NULL, NULL, NULL);
+		SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Examples:");
+		SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Example 1");
+		SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Example 2");
+		SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Example 3");
+		SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Example 4");
+		SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Example 5");
+		SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Example 6");
+
+		SendMessage(hCombo, CB_SETCURSEL, (WPARAM) 0, (LPARAM) 0);
+
 		rect.top = (rect.bottom - rect.top) / 6 - 20;
 		rect.left = (rect.right - rect.left) / 6;
 		rect.bottom = rect.top + 20;
 		rect.right = rect.left + 150;
 		
 		SendMessage(hEdit1, EM_SETLIMITTEXT, G_SIZER - 1, 0);
+		SendMessage(hEdit1, EM_SETSEL, 0, -1);//0, -1 means all text sellection.
 		SetFocus(hEdit1);
+
 		break;
 	}
 	case WM_PAINT:	
-		static char limit_4_display[32];
+		char limit_4_display[32];
 		PAINTSTRUCT ps;
 		HDC hDC;
 
@@ -176,12 +216,10 @@ LRESULT CALLBACK Main::MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		if (HIWORD(wParam) == EN_UPDATE) InvalidateRect(hWnd, &rect, TRUE);//actualize char limiter
 
 		else if (HIWORD(wParam) == EN_SETFOCUS) {
-			if (hEdit1 == HWND(lParam)) {
-				if (GetWindowTextLength(hEdit1) == 20) {
-					char buf[22];
-					GetWindowText(hEdit1, buf, 21);
-					if (strcmp(buf, "Type expression here") == 0) SetWindowText(hEdit1, "");
-				}
+			if (hEdit1 == HWND(lParam)) if (GetWindowTextLength(hEdit1) == 20) {
+				char buf[22];
+				GetWindowText(hEdit1, buf, 21);
+				if (strcmp(buf, "Type expression here") == 0) SetWindowText(hEdit1, "");
 			}
 		}
 		else if (HIWORD(wParam) == EN_KILLFOCUS) {
@@ -189,34 +227,15 @@ LRESULT CALLBACK Main::MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		}
 		else if (LOWORD(wParam) == BT_PASTE) {//Paste button push
 			puts("Paste");
-			if (IsClipboardFormatAvailable(CF_TEXT) == 0) break;
-			if (OpenClipboard(hWndMain) == 0) break;
-			HGLOBAL hglb = GetClipboardData(CF_TEXT);
-			SetWindowText(hEdit1, (char*) GlobalLock(hglb));
-			GlobalUnlock(hglb);
-			CloseClipboard();
-			SetFocus(hEdit1);
-			SendMessage(hEdit1, EM_SETSEL, 0, 128);
+			Edit_Paste(hEdit1);
 		}
 		if (LOWORD(wParam) == BT_COPY1) {//Copy 1 button push
 			puts("Copy 1");
-			if (OpenClipboard(hWndMain) == 0) break;
-			EmptyClipboard();
-			HGLOBAL hglb = GlobalAlloc(GMEM_FIXED, GetWindowTextLength(hEdit2) + 1);
-			GetWindowText(hEdit2, (char*) GlobalLock(hglb), GetWindowTextLength(hEdit2) + 1);//Putting retrieved text into Clipboard memory obtained by locking it.(with one line of code)
-			GlobalUnlock(hglb);
-			SetClipboardData(CF_TEXT, hglb);
-			CloseClipboard();
+			Edit_Copy(hEdit2);
 		}
 		if (LOWORD(wParam) == BT_COPY2) {//Copy 2 button push
 			puts("Copy 2");
-			if (OpenClipboard(hWndMain) == 0) break;
-			EmptyClipboard();
-			HGLOBAL hglb = GlobalAlloc(GMEM_FIXED, GetWindowTextLength(hEdit3) + 1);
-			GetWindowText(hEdit3, (char*) GlobalLock(hglb), GetWindowTextLength(hEdit3) + 1);//Putting retrieved text into Clipboard memory obtained by locking it.(with one line of code)
-			GlobalUnlock(hglb);
-			SetClipboardData(CF_TEXT, hglb);
-			CloseClipboard();
+			Edit_Copy(hEdit3);
 		}
 		else if (LOWORD(wParam) == BT_TRANSL) {//Translete
 			puts("BT_Translate");
@@ -231,13 +250,19 @@ LRESULT CALLBACK Main::MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 				SetWindowPos(hDialog, NULL, rc.left - 199, rc.top, NULL, NULL, SWP_NOSIZE | SWP_SHOWWINDOW);
 			}
 		}
+		else if (HIWORD(wParam) == CBN_SELCHANGE) {//combo box maintanence
+			cout << "CBN_SELCHANGE: ";
+			int i = SendMessage(hCombo, CB_GETCURSEL, 0, 0);
+			if (i != 0 && i <= examples.size()) SetWindowText(hEdit1, examples[i - 1]);
+			cout << i << endl;
+		}
 		break;
 	}
 	case WM_LBUTTONDOWN:
 		SetFocus(hWnd);
 		break;
 
-	case VK_RETURN:
+	case VK_RETURN://Point of entrance to the Translation
 	{
 		static char Buffer[G_SIZER];
 		static char buf[22];
@@ -253,12 +278,13 @@ LRESULT CALLBACK Main::MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 
 		unique_ptr<char[]> res1(nullptr);
 		unique_ptr<char[]> res2(nullptr);
-		if (Terminal(Buffer, res1, res2)) PrintOut(Buffer, res1, res2);
+
+		if (Terminal(Buffer, res1, res2)) ShowResult(Buffer, res1, res2);
+		else SetWindowText(hEdit11, "Wrong expression detected");
 
 		break;
 	}
 	case WM_KEYDOWN:
-
 		if (GetAsyncKeyState(VK_CONTROL) & GetAsyncKeyState(VK_TAB)) {//Console showing 
 			HWND hConsole = GetConsoleWindow();
 			cout << "Ctrl+Tab\n";
@@ -291,9 +317,10 @@ LRESULT CALLBACK Manual::DialogProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 		char Label1[] = "I/O Data";
 		char Label2[] = "Keys";
 		char Label3[] = "Close";
-		char Text1[] = "-Letters(A-z) and \r\nDigits(1-9) are allowed\r\n-Must be a spacebar ' ' between two numbers\r\n-Operators: +, -, *, /, \r\n^(power), %(mod) and unar '!' are allowed\r\n"
-			"-Wrong Input cause wrong Output or Nothing:)";
-		char Text2[] = "-Enter is working\r\n-Ctrl+Tab to show Console\r\n";
+		char Text1[] = "-Letters(A-z) and \r\nDigits(1-9) are allowed.\r\n-Must be a spacebar ' ' between two numbers.\r\n"
+			"-Operators: +, -, *, /, \r\n^(power), %(mod) and unar '!' are allowed.\r\n"
+			"-Same Input cause Nothing.\r\n-Wrong input cause appropriate message to be shown.";
+		char Text2[] = "-Enter is working.\r\n-Ctrl+Tab to show Console.\r\n-Drop down Dialog Box contain predefined expressions.";
 		TCITEMA TabItem;
 		RECT rc;
 
