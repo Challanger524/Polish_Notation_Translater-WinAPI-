@@ -4,9 +4,9 @@
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	Craete_Console();
-
 	MSG msg;
+
+	Craete_Console();	
 
 	Main Window("Notation transleter", GetSystemMetrics(SM_CXSCREEN) / 2 - 400, GetSystemMetrics(SM_CYSCREEN) / 2 - 250, 800, 500, hInstance);
 	Manual Dialog("Manual", 0, 0, 200, 300);

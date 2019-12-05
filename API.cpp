@@ -18,11 +18,11 @@ array<HWND, 2> Tab;
 
 array<char[24], 6 > examples = {
 	"(a+b!!)*12!", "((a!+b)!*15)^2!",  //infix
-	"!*!+!a!1 23", "!^!/*!+a!b1!23!4", //prefix
-	"a!1 23-+", "ab+c*3 1 2-/^",  //postfix
+	"!*!+!a!1 23", "!^!/*!+a!b1!23!4",//prefix
+	"a!1 23-+", "ab+c*3 1 2-/^",     //postfix
 };
 
-bool(*Terminal)(const char *, unique_ptr<char[]> &, unique_ptr<char[]> &) = nullptr;
+void(*Terminal)(string_view, unique_ptr<char[]> &, unique_ptr<char[]> &) = nullptr;
 
 void PrintError(const char *Message) { MessageBox(0, Message, "Error", MB_OK | MB_ICONWARNING | MB_DEFBUTTON2); }
 void ShowResult(const char *input, const unique_ptr<char[]> &res1, const unique_ptr<char[]> &res2) {
@@ -171,12 +171,12 @@ LRESULT CALLBACK Main::MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		hEdit21 = CreateWindow("Edit", "Result:", WS_CHILD | ES_READONLY | WS_VISIBLE | WS_DISABLED, (rect.right - rect.left) / 6 - 50, int((rect.bottom - rect.top) / 2), 50, 22, hWnd, NULL, NULL, NULL);
 		hEdit31 = CreateWindow("Edit", "Result:", WS_CHILD | ES_READONLY | WS_VISIBLE | WS_DISABLED, (rect.right - rect.left) / 6 - 50, int((rect.bottom - rect.top) / 1.5), 50, 22, hWnd, NULL, NULL, NULL);
 
-		HWND hButton12 = CreateWindow("Button", "Paste", WS_BORDER | WS_CHILD | WS_VISIBLE, (rect.right - rect.left) / 6 + int((rect.right - rect.left)*0.6), (rect.bottom - rect.top) / 6, 42, 22, hWnd, (HMENU) BT_PASTE, NULL, NULL);
-		HWND hButton22 = CreateWindow("Button", "Copy", WS_BORDER | WS_CHILD | WS_VISIBLE, (rect.right - rect.left) / 6 + int((rect.right - rect.left)*0.6), (rect.bottom - rect.top) / 2, 42, 22, hWnd, (HMENU) BT_COPY1, NULL, NULL);
-		HWND hButton32 = CreateWindow("Button", "Copy", WS_BORDER | WS_CHILD | WS_VISIBLE, (rect.right - rect.left) / 6 + int((rect.right - rect.left)*0.6), int((rect.bottom - rect.top) / 1.5), 42, 22, hWnd, (HMENU) BT_COPY2, NULL, NULL);
+		CreateWindow("Button", "Paste", WS_BORDER | WS_CHILD | WS_VISIBLE, (rect.right - rect.left) / 6 + int((rect.right - rect.left)*0.6), (rect.bottom - rect.top) / 6, 42, 22, hWnd, (HMENU) BT_PASTE, NULL, NULL);
+		CreateWindow("Button", "Copy", WS_BORDER | WS_CHILD | WS_VISIBLE, (rect.right - rect.left) / 6 + int((rect.right - rect.left)*0.6), (rect.bottom - rect.top) / 2, 42, 22, hWnd, (HMENU) BT_COPY1, NULL, NULL);
+		CreateWindow("Button", "Copy", WS_BORDER | WS_CHILD | WS_VISIBLE, (rect.right - rect.left) / 6 + int((rect.right - rect.left)*0.6), int((rect.bottom - rect.top) / 1.5), 42, 22, hWnd, (HMENU) BT_COPY2, NULL, NULL);
 
-		HWND hButtTrans = CreateWindow("Button", "Translate", WS_BORDER | WS_CHILD | WS_VISIBLE | BS_VCENTER | BS_CENTER, (rect.right - rect.left) / 2 - 60, ((rect.bottom - rect.top) / 6 + (rect.bottom - rect.top) / 2) / 2, 100, 50, hWnd, (HMENU) BT_TRANSL, NULL, NULL);
-		HWND hButtManual = CreateWindow("Button", "Manual", WS_CHILD | WS_VISIBLE | BS_VCENTER | BS_CENTER, 0, 0, 60, 25, hWnd, (HMENU) BT_MANUAL, NULL, NULL);
+		CreateWindow("Button", "Translate", WS_BORDER | WS_CHILD | WS_VISIBLE | BS_VCENTER | BS_CENTER, (rect.right - rect.left) / 2 - 60, ((rect.bottom - rect.top) / 6 + (rect.bottom - rect.top) / 2) / 2, 100, 50, hWnd, (HMENU) BT_TRANSL, NULL, NULL);
+		CreateWindow("Button", "Manual", WS_CHILD | WS_VISIBLE | BS_VCENTER | BS_CENTER, 0, 0, 60, 25, hWnd, (HMENU) BT_MANUAL, NULL, NULL);
 
 		hCombo = CreateWindow(WC_COMBOBOX, TEXT("Examples"), CBS_DROPDOWN | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE, 0, (rect.bottom - rect.top) / 6 - 1, 100, rect.bottom, hWnd, NULL, NULL, NULL);
 		SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Examples:");
@@ -252,7 +252,7 @@ LRESULT CALLBACK Main::MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		}
 		else if (HIWORD(wParam) == CBN_SELCHANGE) {//combo box maintanence
 			cout << "CBN_SELCHANGE: ";
-			int i = SendMessage(hCombo, CB_GETCURSEL, 0, 0);
+			size_t i = SendMessage(hCombo, CB_GETCURSEL, 0, 0);
 			if (i != 0 && i <= examples.size()) SetWindowText(hEdit1, examples[i - 1]);
 			cout << i << endl;
 		}
@@ -279,7 +279,9 @@ LRESULT CALLBACK Main::MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		unique_ptr<char[]> res1(nullptr);
 		unique_ptr<char[]> res2(nullptr);
 
-		if (Terminal(Buffer, res1, res2)) ShowResult(Buffer, res1, res2);
+		Terminal(Buffer, res1, res2);
+
+		if (res1 &&res2) ShowResult(Buffer, res1, res2);
 		else SetWindowText(hEdit11, "Wrong expression detected");
 
 		break;

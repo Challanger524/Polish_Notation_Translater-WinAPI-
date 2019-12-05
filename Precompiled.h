@@ -3,8 +3,9 @@
 #include <CommCtrl.h>
 #include <iostream>
 
-#include <array>
+#include <string_view>
 #include <vector>
+#include <array>
 #include <stack>
 
 #include <thread>

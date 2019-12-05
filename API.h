@@ -12,14 +12,11 @@ enum BT {
 extern HWND hWndMain;
 extern HWND hDialog;
 
-extern bool(*Terminal)(const char *, unique_ptr<char[]> &, unique_ptr<char[]> &);//For inside WinMain usage.
+extern void(*Terminal)(string_view, unique_ptr<char[]> &, unique_ptr<char[]> &);//For inside WinMain usage.
 extern int OperChecker(const char Operator);//For inside API.cpp usage
 
 void PrintError(const char *message);
 void Craete_Console();
-//void Edit_Paste(HWND hEdit, char *str);
-//void Edit_Copy(HWND hEdit, char *str);
-
 
 class Main {
 	HWND handle = nullptr;

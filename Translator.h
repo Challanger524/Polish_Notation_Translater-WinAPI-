@@ -1,22 +1,22 @@
 #pragma once
 #include "Precompiled.h"
 
-bool Terminal_Single_Thread(const char *input, unique_ptr<char[]> &res1, unique_ptr<char[]> &res2);
-bool Terminal_Double_Thread(const char *input, unique_ptr<char[]> &res1, unique_ptr<char[]> &res2);
+void Terminal_Single_Thread(string_view input, unique_ptr<char[]> &res1, unique_ptr<char[]> &res2);
+void Terminal_Double_Thread(string_view input, unique_ptr<char[]> &res1, unique_ptr<char[]> &res2);
 
 int OperChecker(const char Operator);
 
-bool InfixSyntaxCheker(const char *, const size_t);
-bool PostfSyntaxCheker(const char *, const size_t);
-bool PrefiSyntaxCheker(const char *, const size_t);
+bool InfixSyntaxCheker(string_view view);
+bool PostfSyntaxCheker(string_view view);
+bool PrefiSyntaxCheker(string_view view);
 
-void InfToPost(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_size);
-void InfToPref(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_size);
+void InfToPost(string_view  _string, unique_ptr<char[]> &ptr);
+void InfToPref(string_view  _string, unique_ptr<char[]> &ptr);
 
-void PostToInf(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_size);
-void PostToPref(const char*_string, unique_ptr<char[]> &ptr, const size_t _str_size);
+void PostToInf(string_view  _string, unique_ptr<char[]> &ptr);
+void PostToPref(string_view _string, unique_ptr<char[]> &ptr);
 
-void PrefToPost(const char*_string, unique_ptr<char[]> &ptr, const size_t _str_size);
-void PrefToInf(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_size);
+void PrefToPost(string_view _string, unique_ptr<char[]> &ptr);
+void PrefToInf(string_view  _string, unique_ptr<char[]> &ptr);
 
-//void PrefToInfMyOwn(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_size);
+//void PrefToInfMyOwn(string_view _string, unique_ptr<char[]> &ptr);

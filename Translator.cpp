@@ -26,89 +26,86 @@ int OperChecker(const char c)
 }
 
 //Processing the input:
-bool Terminal_Single_Thread(const char *input, unique_ptr<char[]> &res1, unique_ptr<char[]> &res2)
+void Terminal_Single_Thread(string_view input, unique_ptr<char[]> &res1, unique_ptr<char[]> &res2)
 {
 	Timer t;
 	bool correct = false;
-	size_t str_size = strlen(input);
 
-	if (str_size < 1) return false;
+	if (input.size() < 3) return;
 
 	cout << "Input :[" << input << ']';
 
 	//Define weather expression is Prefix or Postdix or Infix.
 	if (OperChecker(input[0])) {//if Prefix
 		cout << " - Prefix";
-		correct = PrefiSyntaxCheker(input, str_size);
+		correct = PrefiSyntaxCheker(input);
 		if (correct) {
-			PrefToInf(input, res1, str_size);
+			PrefToInf(input, res1);
 			cout << "\nOutput:[" << res1 << "] - Infix";
-			PrefToPost(input, res2, str_size);
+			PrefToPost(input, res2);
 			cout << "\nOutput:[" << res2 << "] - Postfix";
 		}
 	}
 	else {
-		size_t pos = str_size - 1;
+		size_t pos = input.size() - 1;
 		if (input[pos] == ' ' || OperChecker(input[pos]) < 0) while (--pos != 0 && (input[pos] == ' ' || OperChecker(input[pos]) < 0));//if unar operators at the end
 
 		if (OperChecker(input[pos]) > 0) {//if Postfix
 			cout << " - Postfix";
-			correct = PostfSyntaxCheker(input, str_size);
+			correct = PostfSyntaxCheker(input);
 			if (correct) {
-				PostToPref(input, res1, str_size);
+				PostToPref(input, res1);
 				cout << "\nOutput:[" << res1 << "] - Prefix";
-				PostToInf(input, res2, str_size);
+				PostToInf(input, res2);
 				cout << "\nOutput:[" << res2 << "] - Infix";
 			}
 		}
 		else if (isalnum(input[pos]) || input[pos] == ')') {//if Infix
 			cout << " - Infix";
-			correct = InfixSyntaxCheker(input, str_size);
+			correct = InfixSyntaxCheker(input);
 			if (correct) {
-				InfToPref(input, res1, str_size);
+				InfToPref(input, res1);
 				cout << "\nOutput:[" << res1 << "] - Prefix";
-				InfToPost(input, res2, str_size);
+				InfToPost(input, res2);
 				cout << "\nOutput:[" << res2 << "] - Postfix";
 			}
 		}
 		else cout << "Wrong expression detected.";//if wtf
 	}
 
-	if (!correct) { cout << " wrong expression."; return false; }
-	return true;
+	if (!correct) { cout << " wrong expression."; }
 }
-bool Terminal_Double_Thread(const char *input, unique_ptr<char[]> &res1, unique_ptr<char[]> &res2)
+void Terminal_Double_Thread(string_view input, unique_ptr<char[]> &res1, unique_ptr<char[]> &res2)
 {//works slower because of "thread" !
 	Timer t;
 	bool correct = false;
-	size_t str_size = strlen(input);
 
-	if (str_size < 1) return false;
+	if (input.size() < 3) return;
 
 	cout << "Input :[" << input << ']';
 
 	//Define weather expression is Prefix or Postdix or Infix.
 	if (OperChecker(input[0])) {//if Prefix
 		cout << " - Prefix";
-		correct = PrefiSyntaxCheker(input, str_size);
+		correct = PrefiSyntaxCheker(input);
 		if (correct) {
-			thread T(PrefToInf, ref(input), ref(res1), str_size);
-			PrefToPost(input, res2, str_size);
+			thread T(PrefToInf, ref(input), ref(res1));
+			PrefToPost(input, res2);
 			if (T.joinable())T.join();
 			cout << "\nOutput:[" << res1 << "] - Infix";
 			cout << "\nOutput:[" << res2 << "] - Postfix";
 		}
 	}
 	else {
-		size_t pos = str_size - 1;
+		size_t pos = input.size() - 1;
 		if (input[pos] == ' ' || OperChecker(input[pos]) < 0) while (--pos != 0 && (input[pos] == ' ' || OperChecker(input[pos]) < 0));//if unar operators at the end
 
 		if (OperChecker(input[pos]) > 0) {//if Postfix
 			cout << " - Postfix";
-			correct = PostfSyntaxCheker(input, str_size);
+			correct = PostfSyntaxCheker(input);
 			if (correct) {
-				thread T(PostToPref, ref(input), ref(res1), str_size);
-				PostToInf(input, res2, str_size);
+				thread T(PostToPref, ref(input), ref(res1));
+				PostToInf(input, res2);
 				if (T.joinable())T.join();
 				cout << "\nOutput:[" << res1 << "] - Prefix";
 				cout << "\nOutput:[" << res2 << "] - Infix";
@@ -116,10 +113,10 @@ bool Terminal_Double_Thread(const char *input, unique_ptr<char[]> &res1, unique_
 		}
 		else if (isalnum(input[pos]) || input[pos] == ')') {//if Infix
 			cout << " - Infix";
-			correct = InfixSyntaxCheker(input, str_size);
+			correct = InfixSyntaxCheker(input);
 			if (correct) {
-				thread T(InfToPref, ref(input), ref(res1), str_size);
-				InfToPost(input, res2, str_size);
+				thread T(InfToPref, ref(input), ref(res1));
+				InfToPost(input, res2);
 				if (T.joinable())T.join();
 				cout << "\nOutput:[" << res1 << "] - Prefix";
 				cout << "\nOutput:[" << res2 << "] - Postfix";
@@ -128,36 +125,35 @@ bool Terminal_Double_Thread(const char *input, unique_ptr<char[]> &res1, unique_
 		else cout << "Wrong expression detected.";//if wtf
 	}
 
-	if (!correct) { cout << " wrong expression."; return false; }
-	return true;
+	if (!correct) { cout << " wrong expression."; }
 }
 
 //Verifying the correctness of expression
-bool InfixSyntaxCheker(const char *_string, const size_t _str_size)
+bool InfixSyntaxCheker(string_view view)
 {
 	bool expect_operator = false;
 	int operators = 0;
 	int operands = 0;
 	int brackets = 0;
 
-	for (size_t i = 0; i < _str_size; i++) {
-		if (_string[i] == ' ') continue;
-		else if (OperChecker(_string[i]) > 0 && expect_operator == true) {
+	for (size_t i = 0; i < view.size(); i++) {
+		if (view[i] == ' ') continue;
+		else if (OperChecker(view[i]) > 0 && expect_operator == true) {
 			expect_operator = false;
 			operators++;
 		}
-		else if (isalnum(_string[i]) && expect_operator == false) {
+		else if (isalnum(view[i]) && expect_operator == false) {
 			expect_operator = true;
 			operands++;
 
-			if (isdigit(_string[i])) {
-				while (++i < _str_size && isdigit(_string[i]));
+			if (isdigit(view[i])) {
+				while (++i < view.size() && isdigit(view[i]));
 				i--;
 			}
 		}
-		else if (_string[i] == '(') brackets++;
-		else if (_string[i] == ')' && expect_operator == true) brackets--;
-		else if (OperChecker(_string[i]) < 0 && expect_operator == true) continue;
+		else if (view[i] == '(') brackets++;
+		else if (view[i] == ')' && expect_operator == true) brackets--;
+		else if (OperChecker(view[i]) < 0 && expect_operator == true) continue;
 
 		else return false;
 	}
@@ -168,22 +164,22 @@ bool InfixSyntaxCheker(const char *_string, const size_t _str_size)
 
 	return true;
 }
-bool PostfSyntaxCheker(const char *_string, const size_t _str_size)
+bool PostfSyntaxCheker(string_view view)
 {
 	int operators = 0;
 	int operands = 0;
 
-	for (size_t i = 0; i < _str_size; i++) {
-		if (_string[i] == ' ') continue;
-		else if (OperChecker(_string[i]) > 0) operators++;
-		else if (isalnum(_string[i])) {
+	for (size_t i = 0; i < view.size(); i++) {
+		if (view[i] == ' ') continue;
+		else if (OperChecker(view[i]) > 0) operators++;
+		else if (isalnum(view[i])) {
 			operands++;
-			if (isdigit(_string[i])) {
-				while (++i < _str_size && isdigit(_string[i]));
+			if (isdigit(view[i])) {
+				while (++i < view.size() && isdigit(view[i]));
 				i--;
 			}
 		}
-		else if (OperChecker(_string[i]) < 0) continue;
+		else if (OperChecker(view[i]) < 0) continue;
 		else return false;
 
 		if (operands == operators) return false;
@@ -194,25 +190,25 @@ bool PostfSyntaxCheker(const char *_string, const size_t _str_size)
 
 	return true;
 }
-bool PrefiSyntaxCheker(const char *_string, const size_t _str_size)
+bool PrefiSyntaxCheker(string_view view)
 {
 	bool stop = false;
 	int operators = 0;
 	int operands = 0;
 
-	for (size_t i = 0; i < _str_size; i++)
+	for (size_t i = 0; i < view.size(); i++)
 	{
-		if (_string[i] == ' ') continue;
-		else if (OperChecker(_string[i]) > 0) operators++;
-		else if (isalnum(_string[i]))
+		if (view[i] == ' ') continue;
+		else if (OperChecker(view[i]) > 0) operators++;
+		else if (isalnum(view[i]))
 		{
 			operands++;
-			if (isdigit(_string[i])) {
-				while (i < _str_size && isdigit(_string[i]))i++;
+			if (isdigit(view[i])) {
+				while (i < view.size() && isdigit(view[i])) i++;
 				i--;
 			}
 		}
-		else if (OperChecker(_string[i]) < 0) continue;
+		else if (OperChecker(view[i]) < 0) continue;
 		else return false;
 
 		if (operators + 1 - operands == 0) stop = true;
@@ -227,14 +223,14 @@ bool PrefiSyntaxCheker(const char *_string, const size_t _str_size)
 
 //Translators(standart algorythms from the internet).
 //Before the actual translating, the maximum possible size of result is being counting!
-void InfToPost(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_size)
+void InfToPost(string_view _string, unique_ptr<char[]> &ptr)
 {
 	stack<char> OperStack;
 	size_t pos = 0;//iterator
 	int new_size = 0;
 	int priority = -1;
 
-	for (size_t i = 0; i < _str_size; i++) { //counting amount of -odd places from '(', ')' and needed for ' ' between numbers		
+	for (size_t i = 0; i < _string.size(); i++) { //counting amount of -odd places from '(', ')' and needed for ' ' between numbers		
 		if (isdigit(_string[i])) {
 			new_size++;
 			while (isdigit(_string[++i]));
@@ -243,9 +239,9 @@ void InfToPost(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_s
 		else if (_string[i] == '(' || _string[i] == ')') new_size--;
 	}
 
-	ptr = make_unique<char[]>(_str_size + new_size + 1);
+	ptr = make_unique<char[]>(_string.size() + new_size + 1);
 
-	for (size_t i = 0; i < _str_size; i++)//Infix to Postfix converter
+	for (size_t i = 0; i < _string.size(); i++)//Infix to Postfix converter
 	{
 		if (isalnum(_string[i])) {
 			if (isdigit(_string[i])) {
@@ -291,10 +287,10 @@ void InfToPost(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_s
 	}
 	ptr[pos] = '\0';
 }
-void InfToPref(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_size)
+void InfToPref(string_view _string, unique_ptr<char[]> &ptr)
 {
 	char copy_str[G_SIZER];
-	size_t pos = _str_size;
+	size_t pos = _string.size();
 	copy_str[pos--] = '\0';
 
 	//Here is recursive lambda expression instead of simple function - because "I can".
@@ -371,11 +367,12 @@ void InfToPref(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_s
 	};//InnerReverse(Lambda) end//
 
 #if 1
-	memcpy(copy_str, _string, _str_size);
-	InnerReverse(copy_str, 0, _str_size, InnerReverse);
+	//memcpy(copy_str, _string., _string.size());
+	strcpy_s(copy_str, _string.data());
+	InnerReverse(copy_str, 0, _string.size(), InnerReverse);
 
 #else //Reversing while copying part(a bit faster but less recursive way).
-	for (size_t i = 0; i < _str_size; i++, pos--) {
+	for (size_t i = 0; i < _string.size(); i++, pos--) {
 		if (OperChecker(_string[pos]) < 0) {
 			size_t unar_end = pos + 1;
 			while (OperChecker(_string[--pos]) < 0);
@@ -386,7 +383,7 @@ void InfToPref(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_s
 			}
 			else if (isdigit(_string[pos])) {
 				size_t it = pos + 1;
-				while (pos < _str_size && isdigit(_string[pos])) copy_str[i++] = _string[pos--];
+				while (pos < _string.size() && isdigit(_string[pos])) copy_str[i++] = _string[pos--];
 				for (it; it < unar_end; it++) copy_str[i++] = _string[it];
 				i--;
 				pos++;
@@ -417,18 +414,18 @@ void InfToPref(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_s
 	}
 #endif
 
-	if (!InfixSyntaxCheker(copy_str, _str_size)) {
+	if (!InfixSyntaxCheker(_string)) {
 		cout << "\n[ERROR] Infix reverse failed\n";
 		return;
 	}
 
-	InfToPost(copy_str, ptr, _str_size);//InfToPost call
+	InfToPost(copy_str, ptr);//InfToPost call
 
 	pos = strlen(ptr.get()) - 1;
 	for (size_t i = 0; pos > i; pos--, i++) swap(ptr[i], ptr[pos]);//postfix string reverse
 }
 
-void PostToInf(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_size)
+void PostToInf(string_view _string, unique_ptr<char[]> &ptr)
 {
 	int priority;//for operator priority
 	size_t oper_num = 0;
@@ -440,26 +437,26 @@ void PostToInf(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_s
 		k = 1;
 	size_t new_size;
 
-	for (size_t i = 0; i < _str_size; i++) {
+	for (size_t i = 0; i < _string.size(); i++) {
 		if (OperChecker(_string[i]) > 0) oper_num++;//counting number of binary operators
 		else if (OperChecker(_string[i]) < 0) unar_num++;//counting number of unary operators
 	}
 
 	oper_num++;
-	new_size = _str_size + (oper_num + unar_num) * 2;// the maximum possible amount of chars in result 
+	new_size = _string.size() + (oper_num + unar_num) * 2;// the maximum possible amount of chars in result 
 
 	vector<vector<char>> mas(oper_num, vector<char>(new_size));//matrix as a stack
 	ptr = make_unique<char[]>(new_size);
 
-	for (size_t pos = 0; pos < _str_size; pos++)
+	for (size_t pos = 0; pos < _string.size(); pos++)
 	{
 		if (isalpha(_string[pos]))//if we meet a letter
 		{
 			j = 2;
 			mas[up][0] = '0';//'0' is right
 			mas[up][1] = _string[pos];
-			if (pos + 1 < _str_size && OperChecker(_string[pos + 1]) < 0) {
-				while (pos + 1 < _str_size && OperChecker(_string[++pos]) < 0) mas[up][j++] = _string[pos];
+			if (pos + 1 < _string.size() && OperChecker(_string[pos + 1]) < 0) {
+				while (pos + 1 < _string.size() && OperChecker(_string[++pos]) < 0) mas[up][j++] = _string[pos];
 				pos--;
 			}
 			mas[up][j] = '\0';
@@ -470,7 +467,7 @@ void PostToInf(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_s
 			j = 1;
 			mas[up][0] = '0';//'0' is right
 			while (isdigit(_string[pos])) mas[up][j++] = _string[pos++];
-			if (pos + 1 < _str_size && OperChecker(_string[pos]) < 0) while (pos + 1 < _str_size && OperChecker(_string[pos]) < 0) mas[up][j++] = _string[pos++];
+			if (pos + 1 < _string.size() && OperChecker(_string[pos]) < 0) while (pos + 1 < _string.size() && OperChecker(_string[pos]) < 0) mas[up][j++] = _string[pos++];
 			mas[up][j] = '\0';
 			pos--;
 			up++;
@@ -489,8 +486,9 @@ void PostToInf(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_s
 			k = 1;
 
 			ptr[0] = mas[low][0];
-			if (pos + 1 < _str_size && OperChecker(_string[pos + 1]) < 0) ptr[j++] = '(';
-			while (mas[low][k] != '\0') ptr[j++] = mas[low][k++];//copy from stack to buff
+			if (pos + 1 < _string.size() && OperChecker(_string[pos + 1]) < 0) ptr[j++] = '(';
+			while (mas[low][k] != '\0')
+				ptr[j++] = mas[low][k++];//copy from stack to buff
 			ptr[j] = '\0';
 
 			priority = OperChecker(_string[pos]);
@@ -506,7 +504,6 @@ void PostToInf(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_s
 				mas[low][j] = ptr[j]; //without brackets '(')'
 				j++;
 			}
-
 			mas[low][0] = static_cast<char>(priority + 48);
 			mas[low][j++] = _string[pos];
 
@@ -524,10 +521,10 @@ void PostToInf(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_s
 				}
 			}
 
-			if (pos + 1 < _str_size && OperChecker(_string[pos + 1]) < 0) {
+			if (pos + 1 < _string.size() && OperChecker(_string[pos + 1]) < 0) {
 				mas[low][0] = '0';
 				mas[low][j++] = ')';
-				while (pos + 1 < _str_size && OperChecker(_string[++pos]) < 0) mas[low][j++] = _string[pos];
+				while (pos + 1 < _string.size() && OperChecker(_string[++pos]) < 0) mas[low][j++] = _string[pos];
 				pos--;
 			}
 			mas[low][j] = '\0';
@@ -538,7 +535,7 @@ void PostToInf(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_s
 	while (mas[0][j] != '\0') ptr[k++] = mas[0][j++];//copy result from stack to 'ptr'
 	ptr[k] = '\0';
 }
-void PostToPref(const char*_string, unique_ptr<char[]> &ptr, const size_t _str_size)
+void PostToPref(string_view _string, unique_ptr<char[]> &ptr)
 {
 	stack<char> OperStack;
 	stack<int> PairCondition;
@@ -546,7 +543,7 @@ void PostToPref(const char*_string, unique_ptr<char[]> &ptr, const size_t _str_s
 	size_t num_count = 0;
 	size_t j = 0;//iterator
 
-	for (size_t i = 0; i < _str_size; i++) {
+	for (size_t i = 0; i < _string.size(); i++) {
 		if (_string[i] == ' ') space_count++;
 		else if (isdigit(_string[i])) {
 			while (isdigit(_string[++i]));
@@ -554,7 +551,7 @@ void PostToPref(const char*_string, unique_ptr<char[]> &ptr, const size_t _str_s
 			i--;
 		}
 	}
-	j = _str_size + num_count - space_count + 1;
+	j = _string.size() + num_count - space_count + 1;
 
 	ptr = make_unique<char[]>(j);
 
@@ -562,7 +559,7 @@ void PostToPref(const char*_string, unique_ptr<char[]> &ptr, const size_t _str_s
 	j--;
 	if (num_count)memset(ptr.get(), '$', num_count);
 
-	for (size_t i = _str_size - 1; i < _str_size; )
+	for (size_t i = _string.size() - 1; i < _string.size(); )
 	{
 		if (_string[i] == ' ') i--;
 		else if (OperChecker(_string[i]) > 0) {//|+^
@@ -600,7 +597,7 @@ void PostToPref(const char*_string, unique_ptr<char[]> &ptr, const size_t _str_s
 		{
 			if (isdigit(ptr[j + 1])) ptr[j--] = ' ';
 
-			while (i < _str_size && isdigit(_string[i])) ptr[j--] = _string[i--];
+			while (i < _string.size() && isdigit(_string[i])) ptr[j--] = _string[i--];
 
 			if (!OperStack.empty() && OperChecker(OperStack.top()) < 0) //|+!!!!|a| -> |
 				while (!OperStack.empty() && OperChecker(OperStack.top()) < 0) {
@@ -641,7 +638,7 @@ void PostToPref(const char*_string, unique_ptr<char[]> &ptr, const size_t _str_s
 	}
 }
 
-void PrefToInf(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_size)
+void PrefToInf(string_view _string, unique_ptr<char[]> &ptr)
 {
 	size_t oper_num = 0;
 	size_t unar_num = 0;
@@ -653,18 +650,18 @@ void PrefToInf(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_s
 	size_t new_size;
 	int priority;//for operator priority
 
-	for (size_t i = 0; i < _str_size; i++) {
+	for (size_t i = 0; i < _string.size(); i++) {
 		if (OperChecker(_string[i]) > 0) oper_num++;//counting number of binary operators
 		else if (OperChecker(_string[i]) < 0) unar_num++;//counting number of unary operators
 	}
 
 	oper_num++;
-	new_size = _str_size + (oper_num + unar_num) * 2;// the maximum possible amount of chars in result 
+	new_size = _string.size() + (oper_num + unar_num) * 2;// the maximum possible amount of chars in result 
 
 	vector<vector<char>> mas(oper_num, vector<char>(new_size));//matrix as a stack
 	ptr = make_unique<char[]>(new_size);
 
-	for (size_t pos = _str_size - 1; pos < _str_size; pos--)
+	for (size_t pos = _string.size() - 1; pos < _string.size(); pos--)
 	{
 		if (_string[pos] == ' ') continue;
 		if (isalpha(_string[pos]))//if we meet a letter
@@ -672,8 +669,8 @@ void PrefToInf(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_s
 			j = 2;
 			mas[up][0] = '0';//'0' is right
 			mas[up][1] = _string[pos];
-			if (pos - 1 < _str_size && OperChecker(_string[pos - 1]) < 0) {
-				while (pos - 1 < _str_size && OperChecker(_string[--pos]) < 0) mas[up][j++] = _string[pos];
+			if (pos - 1 < _string.size() && OperChecker(_string[pos - 1]) < 0) {
+				while (pos - 1 < _string.size() && OperChecker(_string[--pos]) < 0) mas[up][j++] = _string[pos];
 				pos++;
 			}
 			mas[up][j] = '\0';
@@ -690,7 +687,7 @@ void PrefToInf(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_s
 
 			while (it < pos)  mas[up][j_it--] = _string[pos--];
 
-			if (pos < _str_size && OperChecker(_string[pos]) < 0) while (pos < _str_size && OperChecker(_string[pos]) < 0) mas[up][j++] = _string[pos--];
+			if (pos < _string.size() && OperChecker(_string[pos]) < 0) while (pos < _string.size() && OperChecker(_string[pos]) < 0) mas[up][j++] = _string[pos--];
 
 			mas[up][0] = '0';//'0' is right
 			mas[up][j] = '\0';
@@ -720,7 +717,7 @@ void PrefToInf(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_s
 			ptr[k] = '\0';
 			k = 1;
 
-			if (pos - 1 < _str_size && OperChecker(_string[pos - 1]) < 0) mas[low][j++] = '(';
+			if (pos - 1 < _string.size() && OperChecker(_string[pos - 1]) < 0) mas[low][j++] = '(';
 
 			if ((mas[up][0] != '0') && (priority > mas[up][0] - 48)) {//if upper operands have lower priority
 				mas[low][j++] = '(';
@@ -744,10 +741,10 @@ void PrefToInf(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_s
 				while (ptr[k] != '\0') mas[low][j++] = ptr[k++]; //without brackets
 			}
 
-			if (pos - 1 < _str_size && OperChecker(_string[pos - 1]) < 0) {
+			if (pos - 1 < _string.size() && OperChecker(_string[pos - 1]) < 0) {
 				mas[low][0] = '0';
 				mas[low][j++] = ')';
-				while (pos - 1 < _str_size && OperChecker(_string[--pos]) < 0) mas[low][j++] = _string[pos];
+				while (pos - 1 < _string.size() && OperChecker(_string[--pos]) < 0) mas[low][j++] = _string[pos];
 				pos++;
 			}
 			mas[low][j] = '\0';
@@ -758,7 +755,7 @@ void PrefToInf(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_s
 	while (mas[0][j] != '\0') ptr[k++] = mas[0][j++];//copy result from stack to 'ptr'
 	ptr[k] = '\0';
 }
-void PrefToPost(const char*_string, unique_ptr<char[]> &ptr, const size_t _str_size)
+void PrefToPost(string_view _string, unique_ptr<char[]> &ptr)
 {
 	stack<char> OperStack;
 	stack<int> PairCondition;
@@ -766,18 +763,18 @@ void PrefToPost(const char*_string, unique_ptr<char[]> &ptr, const size_t _str_s
 	size_t num_count = 0;
 	size_t j = 0;//iterator
 
-	for (size_t i = 0; i < _str_size; i++) {
+	for (size_t i = 0; i < _string.size(); i++) {
 		if (_string[i] == ' ') space_count++;
 		else if (isdigit(_string[i])) {
-			while (isdigit(_string[++i]));
+			while (++i < _string.size() && isdigit(_string[i]));
 			num_count++;
 			i--;
 		}
 	}
 
-	ptr = make_unique<char[]>(_str_size + num_count - space_count + 1);
+	ptr = make_unique<char[]>(_string.size() + num_count - space_count + 1);
 
-	for (size_t i = 0; i < _str_size; )
+	for (size_t i = 0; i < _string.size(); )
 	{
 		if (_string[i] == ' ') i++;
 		else if (OperChecker(_string[i]) > 0) {
@@ -814,7 +811,7 @@ void PrefToPost(const char*_string, unique_ptr<char[]> &ptr, const size_t _str_s
 		else if (isdigit(_string[i]))
 		{
 			if (j > 0 && isdigit(ptr[j - 1])) ptr[j++] = ' ';
-			while (isdigit(_string[i])) ptr[j++] = _string[i++];
+			while (i < _string.size() && isdigit(_string[i])) ptr[j++] = _string[i++];
 
 			if (!OperStack.empty() && OperChecker(OperStack.top()) < 0) //|+!!!!|a| -> |
 				while ((OperChecker(OperStack.top()) < 0)) {
@@ -848,9 +845,9 @@ void PrefToPost(const char*_string, unique_ptr<char[]> &ptr, const size_t _str_s
 }
 
 //Translator made by myself
-//void PrefToInfMyOwn(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_size)
+//void PrefToInfMyOwn(string_view _string, unique_ptr<char[]> &ptr, const size_t _string.size())
 #if 0
-void PrefToInfMyOwn(const char *_string, unique_ptr<char[]> &ptr, const size_t _str_size)
+void PrefToInfMyOwn(string_view _string, unique_ptr<char[]> &ptr, const size_t _string.size())
 {
 	bool block_ready = 0;
 	bool one_operand = 0;
@@ -861,9 +858,9 @@ void PrefToInfMyOwn(const char *_string, unique_ptr<char[]> &ptr, const size_t _
 		j = 1,//iterators
 		k = 1;
 
-	for (size_t i = 0; i < _str_size; i++) if (OperChecker(_string[i])) oper_num++;//counting nuber of binary operators(determine stack depth)
+	for (size_t i = 0; i < _string.size(); i++) if (OperChecker(_string[i])) oper_num++;//counting nuber of binary operators(determine stack depth)
 	oper_num++;
-	size_t p_size = _str_size + oper_num * 2;// the maximum possible amount of chars in result 
+	size_t p_size = _string.size() + oper_num * 2;// the maximum possible amount of chars in result 
 
 	ptr = new char[p_size];
 
@@ -871,7 +868,7 @@ void PrefToInfMyOwn(const char *_string, unique_ptr<char[]> &ptr, const size_t _
 	for (size_t i = 0; i < oper_num; i++) mas[i] = new char[p_size];
 
 
-	for (size_t pos = 0; pos < _str_size; pos++)//Prefix to Infix converter
+	for (size_t pos = 0; pos < _string.size(); pos++)//Prefix to Infix converter
 	{
 		if (_string[pos] == ' ') continue;//!?
 		else if (OperChecker(_string[pos]) > 0) {//if we meet binary operator
@@ -1106,7 +1103,7 @@ void PrefToInfMyOwn(const char *_string, unique_ptr<char[]> &ptr, const size_t _
 			s++;
 		}//while (block_ready && s > 1)//end
 		block_ready = false;
-	}//for (size_t pos = 0; pos < _str_size; pos++)//end
+	}//for (size_t pos = 0; pos < _string.size(); pos++)//end
 
 	j = 1;
 	k = 0;
