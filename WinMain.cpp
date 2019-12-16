@@ -2,7 +2,7 @@
 #include "API.h"
 #include "Translator.h"
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance[[maybe_unused]], LPSTR lpCmdLine[[maybe_unused]], int nCmdShow[[maybe_unused]])
 {
 	MSG msg;
 
@@ -22,10 +22,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return 2;
 	}
 
-	if (thread::hardware_concurrency() > 1) Terminal = Terminal_Double_Thread;
+	if (thread::hardware_concurrency() > 1u) Terminal = Terminal_Double_Thread;
 	else Terminal = Terminal_Single_Thread;	
-
-	ShowWindow(hWndMain, SW_SHOWNORMAL);
 
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		if (msg.wParam == VK_RETURN) {//for keyboard 'Enter' hooking

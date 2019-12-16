@@ -22,7 +22,7 @@ array<char[24], 6 > examples = {
 	"a!1 23-+", "ab+c*3 1 2-/^",     //postfix
 };
 
-void(*Terminal)(string_view, unique_ptr<char[]> &, unique_ptr<char[]> &) = nullptr;
+function<void(string_view, unique_ptr<char[]> &, unique_ptr<char[]> &)> Terminal;
 
 void PrintError(const char *Message) { MessageBox(0, Message, "Error", MB_OK | MB_ICONWARNING | MB_DEFBUTTON2); }
 void ShowResult(const char *input, const unique_ptr<char[]> &res1, const unique_ptr<char[]> &res2) {
@@ -197,6 +197,8 @@ LRESULT CALLBACK Main::MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		SendMessage(hEdit1, EM_SETLIMITTEXT, G_SIZER - 1, 0);
 		SendMessage(hEdit1, EM_SETSEL, 0, -1);//0, -1 means all text sellection.
 		SetFocus(hEdit1);
+
+		ShowWindow(hWnd, SW_SHOWNORMAL);
 
 		break;
 	}

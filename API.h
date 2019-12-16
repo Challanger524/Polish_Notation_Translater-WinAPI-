@@ -12,7 +12,8 @@ enum BT {
 extern HWND hWndMain;
 extern HWND hDialog;
 
-extern void(*Terminal)(string_view, unique_ptr<char[]> &, unique_ptr<char[]> &);//For inside WinMain usage.
+//extern void(*Terminal)(string_view, unique_ptr<char[]> &, unique_ptr<char[]> &);//For inside WinMain usage.
+extern function<void(string_view, unique_ptr<char[]> &, unique_ptr<char[]> &)> Terminal;
 extern int OperChecker(const char Operator);//For inside API.cpp usage
 
 void PrintError(const char *message);
