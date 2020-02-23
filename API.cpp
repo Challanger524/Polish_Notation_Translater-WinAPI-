@@ -298,7 +298,7 @@ LRESULT CALLBACK Main::MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		Terminal(Buffer, res1, res2);
 
 		if (res1 &&res2) ShowResult(Buffer, res1, res2);
-		else SetWindowText(hEdit11, "Wrong expression detected");//deprecated due to regex
+		else SetWindowText(hEdit11, "Wrong expression detected");
 
 		break;
 	}
