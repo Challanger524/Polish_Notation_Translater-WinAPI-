@@ -16,11 +16,13 @@ HWND hCombo;
 HWND hDialog, hTab;
 array<HWND, 2> Tab;
 
-array<char[24], 6 > examples = {
+array<char[24], 6> examples = {
 	"(a+b!!)*12!", "((a!+b)!*15)^2!",  //infix
 	"!*!+!a!1 23", "!^!/*!+a!b1!23!4",//prefix
 	"a!1 23-+", "ab+c*3 1 2-/^",     //postfix
 };
+
+const regex rule(R"([^\s\(\)A-Za-z1-9\d*+\-\*/\^%!])");//if specific (not defined).
 
 function<void(string_view, unique_ptr<char[]> &, unique_ptr<char[]> &)> Terminal;
 
@@ -85,10 +87,11 @@ void Edit_Copy(HWND hEdit) {
 }
 
 Main::Main(LPCSTR caption, int Pos_X, int Pos_Y, int Siz_X, int Siz_Y, HINSTANCE hInstance)
-{
-	WNDCLASS wc = {0};
+{	
+	//assert(handle == nullptr && "Only one instance of the window(main) is allowed!");
 	if (!handle)
 	{
+		WNDCLASS wc{0};
 		memset(&wc, 0, sizeof(wc));
 		wc.lpszClassName = "main_window";
 		wc.lpfnWndProc = (WNDPROC) MainProc;
@@ -105,6 +108,7 @@ Main::Main(LPCSTR caption, int Pos_X, int Pos_Y, int Siz_X, int Siz_Y, HINSTANCE
 			handle = CreateWindow("main_window", caption, WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX, Pos_X, Pos_Y, Siz_X, Siz_Y, NULL, NULL, /*(HINSTANCE) GetModuleHandle*/(NULL), NULL);
 		}
 		else {
+			PrintError("FAIL: to register Main Class\n");
 			cout << "FAIL: to register Main Class\n";
 			terminate();
 		}
@@ -116,7 +120,7 @@ Main::Main(LPCSTR caption, int Pos_X, int Pos_Y, int Siz_X, int Siz_Y, HINSTANCE
 	}
 	else {
 		PrintError("Only one instance of the window is allowed!");
-		terminate();
+		//terminate();
 	}
 }
 Manual::Manual(LPCSTR caption, int Pos_X, int Pos_Y, int Siz_X, int Siz_Y)
@@ -167,7 +171,7 @@ LRESULT CALLBACK Main::MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		hEdit2 = CreateWindow("Edit", "Here will be the answer", WS_BORDER | WS_CHILD | ES_READONLY | WS_VISIBLE, (rect.right - rect.left) / 6, (rect.bottom - rect.top) / 2, int((rect.right - rect.left)*0.6), 22, hWnd, NULL, NULL, NULL);
 		hEdit3 = CreateWindow("Edit", "Here will be the answer", WS_BORDER | WS_CHILD | ES_READONLY | WS_VISIBLE, (rect.right - rect.left) / 6, int((rect.bottom - rect.top) / 1.5), int((rect.right - rect.left)*0.6), 22, hWnd, NULL, NULL, NULL);
 
-		hEdit11 = CreateWindow("Edit", "Expression type detector", WS_CHILD | WS_VISIBLE | WS_DISABLED, (rect.right - rect.left) / 6 + 2, (rect.bottom - rect.top) / 6 + 22, 190, 22, hWnd, NULL, NULL, NULL);
+		hEdit11 = CreateWindow("Edit", "Expression type detector", WS_CHILD | WS_VISIBLE | WS_DISABLED, (rect.right - rect.left) / 6 + 2, (rect.bottom - rect.top) / 6 + 22, 300, 22, hWnd, NULL, NULL, NULL);
 		hEdit21 = CreateWindow("Edit", "Result:", WS_CHILD | ES_READONLY | WS_VISIBLE | WS_DISABLED, (rect.right - rect.left) / 6 - 50, int((rect.bottom - rect.top) / 2), 50, 22, hWnd, NULL, NULL, NULL);
 		hEdit31 = CreateWindow("Edit", "Result:", WS_CHILD | ES_READONLY | WS_VISIBLE | WS_DISABLED, (rect.right - rect.left) / 6 - 50, int((rect.bottom - rect.top) / 1.5), 50, 22, hWnd, NULL, NULL, NULL);
 
@@ -208,7 +212,7 @@ LRESULT CALLBACK Main::MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		HDC hDC;
 
 		hDC = BeginPaint(hWnd, &ps);
-		wsprintf(limit_4_display, "Characters: %d / %d\0", SendMessage(hEdit1, EM_LINELENGTH, 0, 0), G_SIZER - 1);
+		wsprintf(limit_4_display, "Characters: %d / %u\0", SendMessage(hEdit1, EM_LINELENGTH, 0, 0), G_SIZER - 1);
 		TextOut(hDC, rect.left, rect.top, limit_4_display, strlen(limit_4_display));
 
 		EndPaint(hWnd, &ps);
@@ -268,6 +272,7 @@ LRESULT CALLBACK Main::MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 	{
 		static char Buffer[G_SIZER];
 		static char buf[22];
+		cmatch odd;
 
 		if (GetWindowTextLength(hEdit1) < 1) break;
 		
@@ -281,10 +286,19 @@ LRESULT CALLBACK Main::MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		unique_ptr<char[]> res1(nullptr);
 		unique_ptr<char[]> res2(nullptr);
 
+		if (regex_search(Buffer, odd, rule)) {
+			char message[63];
+			char c = odd.str().operator[](0);
+
+			wsprintf(message, "Odd character '%c' at position: %u detected\0", c, odd.position());
+			SetWindowText(hEdit11, message);
+			cout << "[Alarm]: Odd character '" << odd.str() << "' at position: " << odd.position() << " detected.\n";
+			break;
+		}
 		Terminal(Buffer, res1, res2);
 
 		if (res1 &&res2) ShowResult(Buffer, res1, res2);
-		else SetWindowText(hEdit11, "Wrong expression detected");
+		else SetWindowText(hEdit11, "Wrong expression detected");//deprecated due to regex
 
 		break;
 	}

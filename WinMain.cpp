@@ -4,10 +4,9 @@
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance[[maybe_unused]], LPSTR lpCmdLine[[maybe_unused]], int nCmdShow[[maybe_unused]])
 {
-	MSG msg;
-
 	Craete_Console();	
-
+	
+	MSG msg;
 	Main Window("Notation transleter", GetSystemMetrics(SM_CXSCREEN) / 2 - 400, GetSystemMetrics(SM_CYSCREEN) / 2 - 250, 800, 500, hInstance);
 	Manual Dialog("Manual", 0, 0, 200, 300);
 
@@ -33,6 +32,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance[[maybe_unused]],
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
-	//return 0;
-	return msg.wParam;
+
+	return msg.wParam;//exit
 }

@@ -70,13 +70,13 @@ void Terminal_Single_Thread(string_view input, unique_ptr<char[]> &res1, unique_
 				cout << "\nOutput:[" << res2 << "] - Postfix";
 			}
 		}
-		else cout << "Wrong expression detected.";//if wtf
+		else cout << "Wrong expression detected.";//if wrong
 	}
 
 	if (!correct) { cout << " wrong expression."; }
 }
 void Terminal_Double_Thread(string_view input, unique_ptr<char[]> &res1, unique_ptr<char[]> &res2)
-{//works slower because of "thread" !
+{//works slower because of threading !
 	Timer t;
 	bool correct = false;
 
@@ -89,9 +89,9 @@ void Terminal_Double_Thread(string_view input, unique_ptr<char[]> &res1, unique_
 		cout << " - Prefix";
 		correct = PrefiSyntaxCheker(input);
 		if (correct) {
-			thread T(PrefToInf, ref(input), ref(res1));
+			auto handle = async(launch::async | launch::deferred, PrefToInf, ref(input), ref(res1));
 			PrefToPost(input, res2);
-			if (T.joinable())T.join();
+			handle.wait();
 			cout << "\nOutput:[" << res1 << "] - Infix";
 			cout << "\nOutput:[" << res2 << "] - Postfix";
 		}
@@ -104,9 +104,9 @@ void Terminal_Double_Thread(string_view input, unique_ptr<char[]> &res1, unique_
 			cout << " - Postfix";
 			correct = PostfSyntaxCheker(input);
 			if (correct) {
-				thread T(PostToPref, ref(input), ref(res1));
+				auto handle = async(launch::async | launch::deferred, PostToPref, ref(input), ref(res1));
 				PostToInf(input, res2);
-				if (T.joinable())T.join();
+				handle.wait();
 				cout << "\nOutput:[" << res1 << "] - Prefix";
 				cout << "\nOutput:[" << res2 << "] - Infix";
 			}
@@ -115,14 +115,14 @@ void Terminal_Double_Thread(string_view input, unique_ptr<char[]> &res1, unique_
 			cout << " - Infix";
 			correct = InfixSyntaxCheker(input);
 			if (correct) {
-				thread T(InfToPref, ref(input), ref(res1));
+				auto handle = async(launch::async | launch::deferred, InfToPref, ref(input), ref(res1));
 				InfToPost(input, res2);
-				if (T.joinable())T.join();
+				handle.wait();
 				cout << "\nOutput:[" << res1 << "] - Prefix";
 				cout << "\nOutput:[" << res2 << "] - Postfix";
 			}
 		}
-		else cout << "Wrong expression detected.";//if wtf
+		else cout << "Wrong expression detected.";//if wrong
 	}
 
 	if (!correct) { cout << " wrong expression."; }
@@ -223,6 +223,7 @@ bool PrefiSyntaxCheker(string_view view)
 
 //Translators(standart algorythms from the internet).
 //Before the actual translating, the maximum possible size of result is being counting!
+
 void InfToPost(string_view _string, unique_ptr<char[]> &ptr)
 {
 	stack<char> OperStack;
@@ -293,7 +294,7 @@ void InfToPref(string_view _string, unique_ptr<char[]> &ptr)
 	size_t pos = _string.size();
 	copy_str[pos--] = '\0';
 
-	//Here is recursive lambda expression instead of simple function - because "I can".
+	//Here is recursive lambda expression instead of simple function - because "I can" and it is some sort of incapsulation.
 	auto InnerReverse = [] (char *copy, size_t begin, size_t end, const auto &Lambda) -> void {
 		char temp;
 		size_t it;
@@ -844,7 +845,7 @@ void PrefToPost(string_view _string, unique_ptr<char[]> &ptr)
 	ptr[j] = '\0';
 }
 
-//Translator made by myself
+//Translator made by myself (deprecated)
 //void PrefToInfMyOwn(string_view _string, unique_ptr<char[]> &ptr, const size_t _string.size())
 #if 0
 void PrefToInfMyOwn(string_view _string, unique_ptr<char[]> &ptr, const size_t _string.size())

@@ -12,7 +12,6 @@ enum BT {
 extern HWND hWndMain;
 extern HWND hDialog;
 
-//extern void(*Terminal)(string_view, unique_ptr<char[]> &, unique_ptr<char[]> &);//For inside WinMain usage.
 extern function<void(string_view, unique_ptr<char[]> &, unique_ptr<char[]> &)> Terminal;
 extern int OperChecker(const char Operator);//For inside API.cpp usage
 
@@ -23,15 +22,15 @@ class Main {
 	HWND handle = nullptr;
 	static LRESULT CALLBACK MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);//Main window procedure function declaration
 public:
-	explicit operator HWND () const { return handle; }
 	explicit Main(LPCSTR caption, int Pos_X, int Pos_Y, int Siz_X, int Siz_Y, HINSTANCE hInstance);
-
+	explicit operator HWND () const { return handle; }
 	Main(const Main&) = delete;
 	Main operator =(const Main&) = delete;
 private:
 	Main() {}
 	//~Main() {}
 };
+//HWND Main::handle = nullptr;
 class Manual {
 	HWND handle = nullptr;
 	static LRESULT CALLBACK DialogProc(HWND, UINT, WPARAM, LPARAM);

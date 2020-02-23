@@ -7,9 +7,12 @@
 #include <vector>
 #include <array>
 #include <stack>
+#include <regex>
 
 #include <thread>
+#include <future>
 #include <memory>
+//#include <cassert>
 
 /*//for visual styles enabling
 #pragma comment(linker, \
