@@ -20,3 +20,5 @@ void PrefToPost(string_view _string, unique_ptr<char[]> &ptr);
 void PrefToInf(string_view  _string, unique_ptr<char[]> &ptr);
 
 //void PrefToInfMyOwn(string_view _string, unique_ptr<char[]> &ptr);
+
+int count_num(string_view::const_iterator First, string_view::const_iterator Last);

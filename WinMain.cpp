@@ -5,7 +5,8 @@
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance[[maybe_unused]], LPSTR lpCmdLine[[maybe_unused]], int nCmdShow[[maybe_unused]])
 {
 	Craete_Console();	
-	
+
+	Timer t;
 	MSG msg;
 	Main Window("Notation transleter", GetSystemMetrics(SM_CXSCREEN) / 2 - 400, GetSystemMetrics(SM_CYSCREEN) / 2 - 250, 800, 500, hInstance);
 	Manual Dialog("Manual", 0, 0, 200, 300);
@@ -23,6 +24,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance[[maybe_unused]],
 
 	if (thread::hardware_concurrency() > 1u) Terminal = Terminal_Double_Thread;
 	else Terminal = Terminal_Single_Thread;	
+	cout.precision(4);
 
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		if (msg.wParam == VK_RETURN) {//for keyboard 'Enter' hooking
@@ -32,6 +34,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance[[maybe_unused]],
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
+
+	cout.precision(2);
+	cout << "\nTermination...\nOperating time: " << static_cast<std::chrono::duration<float>>(t.get()).count() << " sec.\n";
+	if (IsWindowVisible(GetConsoleWindow())) system("pause");
 
 	return msg.wParam;//exit
 }
