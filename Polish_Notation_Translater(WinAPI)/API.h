@@ -18,6 +18,10 @@ extern int OperChecker(const char Operator);//For inside API.cpp usage
 void PrintError(const char *message);
 void Craete_Console();
 
+void SpaceRemover(char str[]);
+void SpaceRemover(string &str);
+
+//Window holders
 class Main {
 	HWND handle = nullptr;
 	static LRESULT CALLBACK MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);//Main window procedure function declaration
@@ -30,7 +34,7 @@ private:
 	Main() {}
 	//~Main() {}
 };
-//HWND Main::handle = nullptr;
+
 class Manual {
 	HWND handle = nullptr;
 	static LRESULT CALLBACK DialogProc(HWND, UINT, WPARAM, LPARAM);

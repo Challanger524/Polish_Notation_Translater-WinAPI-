@@ -12,9 +12,10 @@
 #include <thread>
 #include <future>
 #include <memory>
-//#include <cassert>
+#include <cassert>
 
-/*//for visual styles enabling
+//for visual styles enabling
+/*
 #pragma comment(linker, \
   "\"/manifestdependency:type='Win32' "\
   "name='Microsoft.Windows.Common-Controls' "\

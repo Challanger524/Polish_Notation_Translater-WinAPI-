@@ -28,15 +28,18 @@ function<void(string_view, unique_ptr<char[]> &, unique_ptr<char[]> &)> Terminal
 
 void PrintError(const char *Message) { MessageBox(0, Message, "Error", MB_OK | MB_ICONWARNING | MB_DEFBUTTON2); }
 void ShowResult(const char *input, const unique_ptr<char[]> &res1, const unique_ptr<char[]> &res2) {
+	size_t pos = 0;
+	size_t siz = strlen(input);
+	if (input[pos] == ' ') while (++pos < siz && input[pos] == ' ');
 
-	if (OperChecker(input[0])) {//if Prefix
+	if (OperChecker(input[pos])) {//if Prefix
 
 		SetWindowText(hEdit11, "Prefix expression accepted");
 		SetWindowText(hEdit21, "    Infix:");
 		SetWindowText(hEdit31, "Postfix:");
 	}	
 	else {
-		size_t pos = strlen(input) - 1;
+		pos = siz - 1;
 		if (input[pos] == ' ' || OperChecker(input[pos]) < 0) while (--pos != 0 && (input[pos] == ' ' || OperChecker(input[pos]) < 0));//if unar operators at the end
 
 		if (OperChecker(input[pos]) > 0) {//if Postfix
@@ -49,7 +52,7 @@ void ShowResult(const char *input, const unique_ptr<char[]> &res1, const unique_
 			SetWindowText(hEdit21, "  Prefix:");
 			SetWindowText(hEdit31, "Postfix:");
 		}
-		else cout << "Wrong expression detected.";//if wtf
+		else assert("[ASSERT]:ShowResult() input notation detect fail");//if wtf
 	}
 	SetWindowText(hEdit2, res1.get());
 	SetWindowText(hEdit3, res2.get());
@@ -271,23 +274,32 @@ LRESULT CALLBACK Main::MainProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 	case VK_RETURN://Point of entrance to the Translation
 	{
 		static char Buffer[G_SIZER];
-		static char buf[22];
+		static char buf[G_SIZER];
 		cmatch odd;
 
 		if (GetWindowTextLength(hEdit1) < 1) break;
 		
-		GetWindowText(hEdit1, buf, 22);
+		GetWindowText(hEdit1, buf, G_SIZER);
 
-		if (strcmp(Buffer, buf) == 0) break;
 		if (strlen(buf) == 20) if (strcmp(buf, "Type expression here") == 0) break;
+
+		SpaceRemover(buf);
+
+		if (strcmp(Buffer, buf) == 0) {
+			SetWindowText(hEdit11, "Same expression detected");
+			break;
+		}
+		
 
 		GetWindowText(hEdit1, Buffer, G_SIZER);
 
 		unique_ptr<char[]> res1(nullptr);
 		unique_ptr<char[]> res2(nullptr);
 
+		SpaceRemover(Buffer);
+
 		if (regex_search(Buffer, odd, rule)) {
-			char message[63];
+			char message[64];
 			char c = odd.str().operator[](0);
 
 			wsprintf(message, "Odd character '%c' at position: %u detected\0", c, odd.position());
@@ -335,10 +347,10 @@ LRESULT CALLBACK Manual::DialogProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 		char Label1[] = "I/O Data";
 		char Label2[] = "Keys";
 		char Label3[] = "Close";
-		char Text1[] = "-Letters(A-z) and \r\nDigits(1-9) are allowed.\r\n-Must be a spacebar ' ' between two numbers.\r\n"
+		const char Text1[] = "-Letters(A-z) and \r\nDigits(1-9) are allowed.\r\n-Must be a spacebar ' ' between two numbers.\r\n"
 			"-Operators: +, -, *, /, \r\n^(power), %(mod) and unar '!' are allowed.\r\n"
 			"-Same Input cause Nothing.\r\n-Wrong input cause appropriate message to be shown.";
-		char Text2[] = "-Enter is working.\r\n-Ctrl+Tab to show Console.\r\n-Drop down Dialog Box contain predefined expressions.";
+		const char Text2[] = "-Enter is working.\r\n-Ctrl+Tab to show Console.\r\n-Drop down Dialog Box contain predefined examples.";
 		TCITEMA TabItem;
 		RECT rc;
 

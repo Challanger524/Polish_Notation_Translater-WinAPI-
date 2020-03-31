@@ -1,6 +1,5 @@
 #include "Precompiled.h"
 #include "Translator.h"
-#include <cassert>
 
 //"Get operator's priority"
 int OperChecker(const char c)
@@ -8,7 +7,7 @@ int OperChecker(const char c)
 	if (c == '+' || c == '-') return 1;
 	else if (c == '*' || c == '/' || c == '%') return 2;
 	else if (c == '^') return 3;
-	else if (c == '!') return-1; //for unar operators
+	else if (c == '!') return-1;//for unar operators
 	else return 0;
 }
 
@@ -79,6 +78,7 @@ void Terminal_Double_Thread(string_view input, unique_ptr<char[]> &res1, unique_
 		cout << " - Wrong input!";
 		return;
 	}
+
 	//Define weather expression is Prefix or Postdix or Infix.
 	if (OperChecker(input[pos])) {//if Prefix
 		cout << " - Prefix";
@@ -212,6 +212,7 @@ bool PrefiSyntaxCheker(string_view view)
 
 	if (operands < 2) return false;
 	if (operators != operands - 1) return false;
+	if (OperChecker(view[view.size() - 1])) return false;
 
 	return true;
 }
@@ -223,21 +224,21 @@ void InfToPost(string_view _string, unique_ptr<char[]> &ptr)
 {
 	stack<char> OperStack;
 	size_t pos = 0;//iterator
-	long long new_size = 0;
+	int new_size = 0;
 	int priority = -1;
 
 	//counting amount of -odd places from '(', ')' and needed for ' ' between numbers
 	new_size = count_num(_string.begin(), _string.end());
-	new_size -= 2 * count(_string.begin(), _string.end(), '(');
+	new_size -= static_cast<int>(2 * count(_string.begin(), _string.end(), '('));
 
-	ptr = make_unique<char[]>(static_cast<size_t>(new_size + _string.size() + 1));
+	ptr = make_unique<char[]>(new_size + _string.size() + 1);
 
 	for (size_t i = 0; i < _string.size(); i++)//Infix to Postfix converter
 	{
 		if (isalnum(_string[i])) {
 			if (isdigit(_string[i])) {
 				if (pos != 0 && isdigit(ptr[pos - 1])) ptr[pos++] = ' ';//make 123' '															  
-				while (isdigit(_string[i])) ptr[pos++] = _string[i++];//make 123' '456
+				while (i < _string.size() && isdigit(_string[i])) ptr[pos++] = _string[i++];//make 123' '456
 				i--;
 			}
 			else ptr[pos++] = _string[i];
@@ -281,8 +282,7 @@ void InfToPost(string_view _string, unique_ptr<char[]> &ptr)
 void InfToPref(string_view _string, unique_ptr<char[]> &ptr)
 {
 	char copy_str[G_SIZER];
-	size_t pos = _string.size();
-	copy_str[pos--] = '\0';
+	size_t pos;
 
 	//Here is recursive lambda expression instead of simple function - because "I can" and it is some sort of incapsulation.
 	auto InnerReverse = [] (char *copy, size_t begin, size_t end, const auto &Lambda) -> void {
@@ -295,7 +295,7 @@ void InfToPref(string_view _string, unique_ptr<char[]> &ptr)
 			it = end;
 
 			if (OperChecker(copy[end]) < 0) {
-				while (OperChecker(copy[--it]) < 0);
+				while (--it > begin && OperChecker(copy[it]) < 0);//no point to check bounds of 'it'.
 				if (begin >= it) return;
 			}
 			else if (OperChecker(copy[end]) > 0) {
@@ -359,15 +359,17 @@ void InfToPref(string_view _string, unique_ptr<char[]> &ptr)
 	};//InnerReverse(Lambda) end//
 
 #if 1
-	//memcpy(copy_str, _string., _string.size());
 	strcpy_s(copy_str, _string.data());
-	InnerReverse(copy_str, 0, _string.size(), InnerReverse);
+	SpaceRemover(copy_str);
+	pos = strlen(copy_str);
+
+	InnerReverse(copy_str, 0, pos, InnerReverse);
 
 #else //Reversing while copying part(a bit faster but less recursive way).
 	for (size_t i = 0; i < _string.size(); i++, pos--) {
 		if (OperChecker(_string[pos]) < 0) {
 			size_t unar_end = pos + 1;
-			while (OperChecker(_string[--pos]) < 0);
+			while (--pos != 0 && OperChecker(_string[pos]) < 0);
 
 			if (isalpha(_string[pos])) {
 				copy_str[i] = _string[pos];
@@ -409,13 +411,13 @@ void InfToPref(string_view _string, unique_ptr<char[]> &ptr)
 	if (!InfixSyntaxCheker(_string)) {
 		cout << "\n[ERROR] Infix reverse failed\n";
 		return;
-		}
+	}
 
 	InfToPost(copy_str, ptr);//InfToPost call
 
 	pos = strlen(ptr.get()) - 1;
 	for (size_t i = 0; pos > i; pos--, i++) swap(ptr[i], ptr[pos]);//postfix string reverse
-	}
+}
 
 void PostToInf(string_view _string, unique_ptr<char[]> &ptr)
 {
@@ -460,7 +462,7 @@ void PostToInf(string_view _string, unique_ptr<char[]> &ptr)
 		{
 			j = 1;
 			mas[up][0] = '0';//'0' is right
-			while (isdigit(_string[pos])) mas[up][j++] = _string[pos++];
+			while (pos < _string.size() && isdigit(_string[pos])) mas[up][j++] = _string[pos++];
 			pos--;
 			if (pos + 1 < _string.size() && _string[pos + 1] == ' ') {
 				while (++pos < _string.size() && _string[pos] == ' ');
@@ -684,7 +686,7 @@ void PrefToInf(string_view _string, unique_ptr<char[]> &ptr)
 			size_t it = pos;
 			size_t j_it;
 
-			while (isdigit(_string[--it]));
+			while (--it != 0 && isdigit(_string[it]));
 			j_it = pos - it;
 			j = j_it + 1;
 
@@ -822,7 +824,7 @@ void PrefToPost(string_view _string, unique_ptr<char[]> &ptr)
 			while (i < _string.size() && isdigit(_string[i])) ptr[j++] = _string[i++];
 
 			if (!OperStack.empty() && OperChecker(OperStack.top()) < 0) //|+!!!!|a| -> |
-				while ((OperChecker(OperStack.top()) < 0)) {
+				while (!OperStack.empty() && OperChecker(OperStack.top()) < 0) {
 					ptr[j++] = OperStack.top();
 					OperStack.pop();
 				}
@@ -1111,7 +1113,7 @@ void PrefToInfMyOwn(string_view _string, unique_ptr<char[]> &ptr, const size_t _
 			s++;
 		}//while (block_ready && s > 1)//end
 		block_ready = false;
-		}//for (size_t pos = 0; pos < _string.size(); pos++)//end
+	}//for (size_t pos = 0; pos < _string.size(); pos++)//end
 
 	j = 1;
 	k = 0;
@@ -1122,8 +1124,37 @@ void PrefToInfMyOwn(string_view _string, unique_ptr<char[]> &ptr, const size_t _
 		delete[] mas[i];
 	delete[] mas;
 	//PrefToInf//end
-	}
+}
 #endif
+
+void SpaceRemover(string &str) {
+	size_t pos = SIZE_MAX - 1;
+	while (pos != -1) {
+		pos = str.find_last_of(' ', --pos);
+		if (pos != -1) if (pos != 0 && isdigit(str[pos - 1])) if (pos + 1 < str.size() && isdigit(str[pos + 1])) continue;
+		if (pos != -1) str.erase(pos, 1);
+	}
+}
+
+void SpaceRemover(char str[]) {
+	for (size_t begin = 0; str[begin] != '\0';) {
+		if (str[begin] == ' ') {
+			if (begin != 0 && str[begin] != '\n')if (str[begin + 1] != '\0' && isdigit(str[begin + 1])) if (isdigit(str[begin - 1])) { begin++; continue; }
+			size_t i = begin;
+			size_t j = begin + 1;
+			while (str[j] != '\0') str[i++] = str[j++];
+			str[j - 1] = str[j];
+		}
+		else begin++;
+	}
+}
+
+bool Check(unique_ptr<char[]> &res) {
+	if (InfixSyntaxCheker(res.get())) return true;
+	if (PostfSyntaxCheker(res.get())) return true;
+	if (PrefiSyntaxCheker(res.get())) return true;
+	return false;
+}
 
 [[nodiscard]] int count_num(string_view::const_iterator First, string_view::const_iterator Last) {
 	assert(First <= Last && "iterator First no bigger than Last");
